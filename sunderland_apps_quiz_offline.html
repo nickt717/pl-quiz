@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Sunderland Appearances Quiz (Offline)</title>
+  <style>
+    :root { color-scheme: dark; }
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#0b0f1a;color:#fff;}
+    .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:16px;}
+    .card{width:min(880px,100%);border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(255,255,255,.04);box-shadow:0 16px 50px rgba(0,0,0,.45);overflow:hidden;}
+    header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.1);flex-wrap:wrap;}
+    .title{font-weight:800;}
+    .meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+    .pill{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);font-size:13px;white-space:nowrap;}
+    .btn{cursor:pointer;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#fff;font-weight:700;}
+    .btn:hover{background:rgba(255,255,255,.12);}
+    .btn:disabled{opacity:.55;cursor:not-allowed;}
+    main{padding:16px;}
+    .grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px;}
+    @media(min-width:760px){.grid{grid-template-columns:1fr 1fr;}}
+    .choice{padding:16px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);display:flex;flex-direction:column;gap:10px;min-height:140px;}
+    .name{font-size:20px;font-weight:800;line-height:1.2;}
+    .sub{opacity:.85;font-size:13px;}
+    .bigbtn{margin-top:auto;width:100%;padding:12px 14px;font-size:16px;}
+    .center{text-align:center;}
+    .status{margin-top:12px;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);line-height:1.45;}
+    .ok{border-color:rgba(60,255,140,.35);background:rgba(60,255,140,.08);}
+    .bad{border-color:rgba(255,80,80,.35);background:rgba(255,80,80,.08);}
+    .muted{opacity:.75;}
+    .row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:12px;}
+    .small{font-size:12px;opacity:.8;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <header>
+      <div class="title">⚽ Sunderland Apps Quiz (Offline)</div>
+      <div class="meta">
+        <div class="pill" id="dataPill">Data: offline</div>
+        <div class="pill" id="scorePill">Score: 0</div>
+        <div class="pill" id="streakPill">Streak: 0</div>
+        <div class="pill" id="bestPill">Best: 0</div>
+        <button class="btn" id="newBtn">New Question</button>
+        <button class="btn" id="resetBtn">Reset</button>
+      </div>
+    </header>
+
+    <main>
+      <div class="center muted" id="prompt">Who has more Sunderland appearances?</div>
+
+      <div class="grid">
+        <div class="choice">
+          <div class="name" id="nameA">—</div>
+          <div class="sub" id="subA">Pick the player with MORE apps</div>
+          <button class="btn bigbtn" id="btnA" disabled>Choose A</button>
+        </div>
+        <div class="choice">
+          <div class="name" id="nameB">—</div>
+          <div class="sub" id="subB">Pick the player with MORE apps</div>
+          <button class="btn bigbtn" id="btnB" disabled>Choose B</button>
+        </div>
+      </div>
+
+      <div id="status" class="status muted" style="display:none;"></div>
+
+      <div class="row">
+        <label class="pill" style="display:flex;gap:8px;align-items:center;">
+          <input type="checkbox" id="closeMode"/> Close mode (prefer similar totals)
+        </label>
+        <label class="pill" style="display:flex;gap:8px;align-items:center;">
+          <input type="checkbox" id="revealOnPick" checked/> Reveal numbers after pick
+        </label>
+      </div>
+
+      <div class="center small" style="margin-top:10px;">
+        Works completely offline. Open this file in any browser.
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+const PLAYERS = [{"name": "John O'Shea", "value": 189}, {"name": "Sebastian Larsson", "value": 176}, {"name": "Phil Bardsley", "value": 174}, {"name": "Michael Gray", "value": 170}, {"name": "Lee Cattermole", "value": 170}, {"name": "Kevin Phillips", "value": 139}, {"name": "Kieran Richardson", "value": 134}, {"name": "Niall Quinn", "value": 129}, {"name": "Thomas Sörensen", "value": 126}, {"name": "Adam Johnson", "value": 122}, {"name": "Jack Colback", "value": 114}, {"name": "Jody Craddock", "value": 108}, {"name": "Kevin Kilbane", "value": 108}, {"name": "Darren Williams", "value": 108}, {"name": "Gavin McCann", "value": 105}, {"name": "Steed Malbranque", "value": 102}, {"name": "Dean Whitehead", "value": 98}, {"name": "George McCartney", "value": 98}, {"name": "Danny Collins", "value": 96}, {"name": "Kenwyne Jones", "value": 94}, {"name": "Steven Fletcher", "value": 94}, {"name": "Simon Mignolet", "value": 90}, {"name": "Craig Gordon", "value": 87}, {"name": "Jermain Defoe", "value": 87}, {"name": "Stéphane Sessègnon", "value": 87}, {"name": "Julio Arca", "value": 86}, {"name": "Anton Ferdinand", "value": 85}, {"name": "Nyron Nosworthy", "value": 85}, {"name": "Patrick van Aanholt", "value": 82}, {"name": "Fabio Borini", "value": 82}, {"name": "Craig Gardner", "value": 81}, {"name": "Connor Wickham", "value": 79}, {"name": "Wes Brown", "value": 76}, {"name": "Daryl Murphy", "value": 72}, {"name": "Jordan Henderson", "value": 71}, {"name": "Alex Rae", "value": 69}, {"name": "Michael Turner", "value": 68}, {"name": "Andy Reid", "value": 68}, {"name": "Vito Mannone", "value": 67}, {"name": "Stefan Schwarz", "value": 67}, {"name": "Grant Leadbitter", "value": 66}, {"name": "Billy Jones", "value": 65}, {"name": "Jack Rodwell", "value": 65}, {"name": "James McClean", "value": 59}, {"name": "Darren Bent", "value": 58}, {"name": "Fraizer Campbell", "value": 58}, {"name": "Chris Makin", "value": 57}, {"name": "Ahmed El Mohamady", "value": 56}, {"name": "David Vaughan", "value": 49}, {"name": "Titus Bramble", "value": 47}, {"name": "Boudewijn Zenden", "value": 47}, {"name": "Paul Thirlwell", "value": 46}, {"name": "Costel Pantilimon", "value": 45}, {"name": "Lamine Koné", "value": 45}, {"name": "Émerson Thome", "value": 44}, {"name": "Kevin Ball", "value": 44}, {"name": "Santiago Vergini", "value": 42}, {"name": "Jozy Altidore", "value": 42}, {"name": "Márton Fülöp", "value": 41}, {"name": "Michael Chopra", "value": 39}, {"name": "Kevin Kyle", "value": 39}, {"name": "Paul Bracewell", "value": 38}, {"name": "Yann M'Vila", "value": 37}, {"name": "Danny Graham", "value": 37}, {"name": "Duncan Watmore", "value": 37}, {"name": "Paul Butler", "value": 35}, {"name": "Gary Breen", "value": 35}, {"name": "Jason McAteer", "value": 35}, {"name": "Djibril Cissé", "value": 35}, {"name": "Jordi Gómez", "value": 35}, {"name": "Wahbi Khazri", "value": 35}, {"name": "Carlos Edwards", "value": 35}, {"name": "John Mensah", "value": 34}, {"name": "Asamoah Gyan", "value": 34}, {"name": "Kelvin Davis", "value": 33}, {"name": "Don Hutchison", "value": 33}, {"name": "Richard Ord", "value": 32}, {"name": "Gareth Hall", "value": 32}, {"name": "Joachim Björklund", "value": 32}, {"name": "Nicky Summerbee", "value": 32}, {"name": "Emanuele Giaccherini", "value": 32}, {"name": "Jordan Pickford", "value": 31}, {"name": "Nedum Onuoha", "value": 31}, {"name": "Lorik Cana", "value": 31}, {"name": "Didier Ndong", "value": 31}, {"name": "Andy Melville", "value": 30}, {"name": "Carlos Cuéllar", "value": 30}, {"name": "Liam Bridcutt", "value": 30}, {"name": "Jon Stead", "value": 30}, {"name": "Dariusz Kubicki", "value": 29}, {"name": "Tommy Miller", "value": 29}, {"name": "Tore André Flo", "value": 29}, {"name": "Liam Lawrence", "value": 29}, {"name": "Lionel Perez", "value": 28}, {"name": "Claudio Reyna", "value": 28}, {"name": "Stephen Wright", "value": 28}, {"name": "Nicklas Bendtner", "value": 28}, {"name": "Bernt Haas", "value": 27}, {"name": "Justin Hoyte", "value": 27}, {"name": "Danny Rose", "value": 27}, {"name": "Sung-yueng Ki", "value": 27}, {"name": "Éric Roy", "value": 27}, {"name": "Liam Miller", "value": 27}, {"name": "Dwight Yorke", "value": 27}, {"name": "Anthony Le Tallec", "value": 27}, {"name": "Craig Russell", "value": 27}, {"name": "Danny Dichio", "value": 27}, {"name": "Phil Babb", "value": 26}, {"name": "Sebastián Coates", "value": 26}, {"name": "Danny Welbeck", "value": 26}, {"name": "Adnan Januzaj", "value": 25}, {"name": "David Meyler", "value": 25}, {"name": "Michael Bridges", "value": 25}, {"name": "Younès Kaboul", "value": 24}, {"name": "David Kelly", "value": 24}, {"name": "Steven Caldwell", "value": 24}, {"name": "Jason Denayer", "value": 24}, {"name": "Paul McShane", "value": 24}, {"name": "Paul Stewart", "value": 24}, {"name": "Dong-won Ji", "value": 24}, {"name": "Robin Roefs", "value": 23}, {"name": "Matthew Kilgallon", "value": 23}, {"name": "Trai Hume", "value": 23}, {"name": "DeAndre Yedlin", "value": 23}, {"name": "Danny Higginbotham", "value": 22}];
+
+(() => {
+  const el = (id) => document.getElementById(id);
+  const dataPill = el("dataPill");
+  const scorePill = el("scorePill");
+  const streakPill = el("streakPill");
+  const bestPill = el("bestPill");
+  const prompt = el("prompt");
+  const status = el("status");
+  const nameA = el("nameA");
+  const nameB = el("nameB");
+  const subA = el("subA");
+  const subB = el("subB");
+  const btnA = el("btnA");
+  const btnB = el("btnB");
+  const newBtn = el("newBtn");
+  const resetBtn = el("resetBtn");
+  const closeMode = el("closeMode");
+  const revealOnPick = el("revealOnPick");
+
+  const players = PLAYERS
+    .filter(p => p && typeof p.name === "string" && p.name.trim() && Number.isFinite(+p.value))
+    .map(p => ({ name: p.name.trim(), value: +p.value }));
+
+  dataPill.textContent = `Data: offline (${players.length} players)`;
+
+  let current = null;
+  let locked = false;
+
+  let score = 0;
+  let streak = 0;
+  let best = Number(localStorage.getItem("sunderland_best_streak") || 0);
+
+  bestPill.textContent = `Best: ${best}`;
+  scorePill.textContent = `Score: ${score}`;
+  streakPill.textContent = `Streak: ${streak}`;
+
+  function setStatus(msg, kind) {
+    status.style.display = "block";
+    status.className = "status " + (kind || "");
+    status.textContent = msg;
+  }
+  function clearStatus() {
+    status.style.display = "none";
+    status.textContent = "";
+    status.className = "status muted";
+  }
+
+  function pickTwo() {
+    if (players.length < 2) return null;
+
+    const tries = closeMode.checked ? 50 : 1;
+    let bestPair = null;
+    let bestDiff = Infinity;
+
+    for (let t = 0; t < tries; t++) {
+      const a = players[Math.floor(Math.random() * players.length)];
+      let b = players[Math.floor(Math.random() * players.length)];
+      while (b === a) b = players[Math.floor(Math.random() * players.length)];
+
+      const diff = Math.abs(a.value - b.value);
+      if (!bestPair || diff < bestDiff) {
+        bestPair = { a, b };
+        bestDiff = diff;
+      }
+      if (!closeMode.checked || bestDiff === 0) break;
+    }
+    return bestPair;
+  }
+
+  function renderQuestion() {
+    locked = false;
+    clearStatus();
+
+    const pair = pickTwo();
+    if (!pair) {
+      prompt.textContent = "Not enough players loaded.";
+      return;
+    }
+    current = pair;
+
+    nameA.textContent = pair.a.name;
+    nameB.textContent = pair.b.name;
+
+    subA.textContent = "Pick the player with MORE apps";
+    subB.textContent = "Pick the player with MORE apps";
+
+    btnA.disabled = false;
+    btnB.disabled = false;
+  }
+
+  function endRound(chosen) {
+    if (locked || !current) return;
+    locked = true;
+
+    btnA.disabled = true;
+    btnB.disabled = true;
+
+    const a = current.a, b = current.b;
+    const correct = (a.value === b.value) ? "tie" : (a.value > b.value ? "A" : "B");
+
+    const reveal = (p) => revealOnPick.checked ? `${p.name}: ${p.value}` : p.name;
+
+    let msg = "", kind = "";
+    if (correct === "tie") {
+      msg = `It’s a tie! ${reveal(a)} • ${reveal(b)}.`;
+      kind = "ok";
+    } else if (chosen === correct) {
+      streak += 1; score += 1;
+      msg = `✅ Correct! ${reveal(a)} • ${reveal(b)}.`;
+      kind = "ok";
+    } else {
+      streak = 0;
+      msg = `❌ Wrong. ${reveal(a)} • ${reveal(b)}.`;
+      kind = "bad";
+    }
+
+    if (revealOnPick.checked) {
+      subA.textContent = `Apps: ${a.value}`;
+      subB.textContent = `Apps: ${b.value}`;
+    }
+
+    if (streak > best) {
+      best = streak;
+      localStorage.setItem("sunderland_best_streak", String(best));
+    }
+
+    scorePill.textContent = `Score: ${score}`;
+    streakPill.textContent = `Streak: ${streak}`;
+    bestPill.textContent = `Best: ${best}`;
+
+    setStatus(msg, kind);
+  }
+
+  btnA.addEventListener("click", () => endRound("A"));
+  btnB.addEventListener("click", () => endRound("B"));
+  newBtn.addEventListener("click", renderQuestion);
+
+  resetBtn.addEventListener("click", () => {
+    score = 0; streak = 0;
+    scorePill.textContent = `Score: ${score}`;
+    streakPill.textContent = `Streak: ${streak}`;
+    clearStatus();
+    renderQuestion();
+  });
+
+  renderQuestion();
+})();
+</script>
+</body>
+</html>
